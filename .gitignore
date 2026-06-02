@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+
+.env
+
+runtimes_log/
+*.log
+
+.vscode/
+
+.aws/
