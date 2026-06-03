@@ -49,7 +49,8 @@ async def chat(
         logger.info(
             f"Citation: "
             f"{citation['source']} "
-            f"| Page {citation['page']}"
+            f"| Page {citation['page']} "
+            f"| URL: {citation.get('url', '')}"
         )
 
         logger.info(

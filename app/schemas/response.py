@@ -11,6 +11,8 @@ class Citation(BaseModel):
 
     snippet: str
 
+    url: str
+
 
 class ChatResponse(BaseModel):
 

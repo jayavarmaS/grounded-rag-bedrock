@@ -25,6 +25,8 @@
 
     <div class="container">
 
+        <!-- Header -->
+
         <div class="hero">
 
             <div class="bot-icon">
@@ -40,6 +42,8 @@
             </p>
 
         </div>
+
+        <!-- Search Box -->
 
         <div class="search-box">
 
@@ -57,11 +61,77 @@
 
         </div>
 
+        <!-- Chat Area -->
+
         <div id="chat-container">
 
         </div>
 
     </div>
+
+   <!-- Citation Modal -->
+
+<div
+    id="citation-modal"
+    class="citation-modal"
+    style="display:none;"
+>
+
+    <div class="modal-content">
+
+        <span
+            class="close-btn"
+            onclick="closeCitation()"
+        >
+            &times;
+        </span>
+
+        <h2>
+            Citation Details
+        </h2>
+
+        <hr>
+
+        <p>
+            <strong>Citation ID:</strong>
+            <span id="modal-id"></span>
+        </p>
+
+        <p>
+            <strong>Source:</strong>
+            <span id="modal-source"></span>
+        </p>
+
+        <p>
+            <strong>Page:</strong>
+            <span id="modal-page"></span>
+        </p>
+
+        <h4>
+            Retrieved Evidence
+        </h4>
+
+        <div
+            id="modal-snippet"
+            class="snippet-box"
+        >
+        </div>
+
+        <br>
+
+        <a
+            id="open-document"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="open-doc-btn"
+            href="#"
+        >
+            📄 Open Document
+        </a>
+
+    </div>
+
+</div>
 
     <script src="script.js"></script>
 

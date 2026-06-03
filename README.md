@@ -4,31 +4,60 @@ A grounded retrieval-augmented generation (RAG) assistant for answering question
 
 ## Overview
 
-This project provides a FastAPI backend and a simple frontend interface for submitting questions and receiving answers with cited document references. It uses AWS Bedrock to retrieve policy documents from a knowledge base and generate grounded responses with evidence snippets.
+This project includes a FastAPI backend and a static frontend for asking questions, retrieving policy documents, and returning grounded answers with citations.
 
-## Features
+## Architecture Flow
 
-- FastAPI backend with `/chat` endpoint
-- Frontend UI for asking questions and viewing answers
-- AWS Bedrock `retrieve_and_generate` integration
-- Citation extraction from retrieved references
-- JSON response model with structured citations
+1. The user enters a question in the browser UI.
+2. Frontend `frontend/script.js` sends a POST request to the backend `/chat` endpoint.
+3. The backend `app/api/chat.py` receives the question and passes it to the Bedrock service implementation in `app/services/bedrock.py`.
+4. Bedrock retrieves relevant policy documents from the knowledge base and generates an answer with supporting citations.
+5. The backend formats the answer and citation metadata using `app/rag/citation.py`.
+6. The frontend displays the response and renders citation cards with links to open PDF documents at the referenced page.
 
-## Project Structure
+## File Structure
 
-- `app/main.py` — FastAPI application and static frontend mounting
-- `app/api/chat.py` — API router for chat requests
-- `app/services/bedrock.py` — AWS Bedrock retrieval and generation code
-- `app/rag/citation.py` — Citation extraction and formatting
-- `app/utils/config.py` — environment configuration loader
-- `app/schemas/` — request and response Pydantic models
-- `frontend/` — static UI assets
+```
+.
+├── README.md
+├── pyproject.toml
+├── .env                 # AWS and environment configuration
+├── app
+│   ├── main.py          # FastAPI app, CORS setup, and static mount
+│   ├── api
+│   │   └── chat.py      # /chat router and request handling
+│   ├── services
+│   │   └── bedrock.py   # AWS Bedrock retrieval and generation logic
+│   ├── rag
+│   │   └── citation.py  # Citation extraction and formatting helpers
+│   ├── schemas
+│   │   ├── request.py   # Chat request schema
+│   │   └── response.py  # Chat response schema
+│   ├── utils
+│   │   └── config.py    # Environment loading and config helpers
+│   └── logs
+│       └── logger.py    # Logging setup
+├── frontend
+│   ├── index.html       # Static chat UI
+│   ├── script.js        # Frontend request/citation logic
+│   └── style.css        # Page styling
+└── runtimes_log
+```
+
+## How It Works
+
+- `app/main.py` initializes FastAPI, enables CORS, includes the chat router, and mounts the `frontend/` directory at `/frontend`.
+- `app/api/chat.py` exposes a POST `/chat` endpoint that accepts a JSON question payload.
+- `app/services/bedrock.py` handles the AWS Bedrock API call to retrieve documents and generate the final answer.
+- `app/rag/citation.py` converts retrieved references into structured citations for the frontend.
+- `frontend/script.js` sends the question, parses the backend response, and renders the answer plus clickable citation cards.
+- `frontend/getPdfUrl()` supports both direct HTTPS links and S3-style PDF sources while preserving query strings and page fragments.
 
 ## Requirements
 
-- Python 3.11+ recommended
+- Python 3.11+
 - AWS credentials configured for Bedrock access
-- `AWS_REGION`, `KNOWLEDGE_BASE_ID`, and `MODEL_ID` set in `.env`
+- Environment variables such as `AWS_REGION`, `KNOWLEDGE_BASE_ID`, and `MODEL_ID`
 
 ## Installation
 
@@ -51,23 +80,23 @@ This project provides a FastAPI backend and a simple frontend interface for subm
    pip install -e .
    ```
 
-3. Create a `.env` file with the following values:
+3. Create a `.env` file with your AWS and Bedrock config:
 
    ```env
-   AWS_REGION=us-west-2
+   AWS_REGION=ap-south-1
    KNOWLEDGE_BASE_ID=<your-knowledge-base-id>
    MODEL_ID=<your-bedrock-model-id>
    ```
 
-## Running the Application
+## Running the App
 
-Start the FastAPI server with Uvicorn:
+Start the FastAPI server:
 
 ```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open the frontend in your browser:
+Then open:
 
 - `http://127.0.0.1:8000/frontend/index.html`
 
@@ -83,7 +112,7 @@ Request body:
 }
 ```
 
-Successful response:
+Response format:
 
 ```json
 {
@@ -93,29 +122,26 @@ Successful response:
       "id": 1,
       "source": "<document-name>",
       "page": 3,
-      "snippet": "<evidence snippet>"
+      "snippet": "<evidence snippet>",
+      "url": "<document-url>"
     }
   ]
 }
 ```
 
-## Frontend
+## Frontend Behavior
 
-The frontend is a simple static page located in `frontend/`:
-
-- `index.html` — user interface
-- `script.js` — chat request logic
-- `style.css` — styling
-
-The UI posts questions to `http://127.0.0.1:8000/chat` and displays the answer with retrieved citations.
+- The browser UI submits the entered question to `/chat`.
+- Returned results show the generated answer and a list of source cards.
+- Clicking a source card opens a citation modal.
+- PDF source links are rendered with `Open PDF at page ...` and preserve existing query parameters.
 
 ## Notes
 
-- Ensure AWS credentials are available in your environment or through the AWS CLI configuration.
-- The Bedrock client uses `boto3` and the `bedrock-agent-runtime` service name.
-- Citation extraction relies on Bedrock response metadata fields.
+- Make sure AWS credentials are available in the environment or via AWS CLI config.
+- The project is built for a basic RAG workflow and can be extended for additional knowledge sources, document types, or UI improvements.
 
 ## License
 
-This repository does not include a license. Add a license file if you want to publish or share this project publicly.
+This repository does not include a license. Add one if you want to share the project publicly.
 

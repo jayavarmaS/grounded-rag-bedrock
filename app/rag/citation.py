@@ -1,54 +1,134 @@
-def extract_citations(response):
+import boto3
+
+from app.utils.config import AWS_REGION
+
+
+def generate_presigned_url(
+    source_uri: str
+):
+
+    if not source_uri:
+        return ""
+
+    if not source_uri.startswith(
+        "s3://"
+    ):
+        return source_uri
+
+    path = source_uri[
+        len("s3://"):
+    ]
+
+    bucket, key = path.split(
+        "/",
+        1
+    )
+
+    s3 = boto3.client(
+        "s3",
+        region_name=AWS_REGION
+    )
+
+    url = s3.generate_presigned_url(
+        "get_object",
+
+        Params={
+            "Bucket": bucket,
+            "Key": key,
+
+            "ResponseContentDisposition":
+            "inline"
+        },
+
+        ExpiresIn=3600
+    )
+
+    return url
+
+
+def extract_citations(
+    response
+):
 
     citations = []
 
     citation_id = 1
 
-    if "citations" in response:
+    if "citations" not in response:
 
-        for citation in response["citations"]:
+        return citations
 
-            for ref in citation.get(
-                "retrievedReferences",
-                []
-            ):
+    for citation in response[
+        "citations"
+    ]:
 
-                metadata = ref.get(
-                    "metadata",
-                    {}
-                )
+        for ref in citation.get(
+            "retrievedReferences",
+            []
+        ):
 
-                source_uri = metadata.get(
-                    "x-amz-bedrock-kb-source-uri",
+            metadata = ref.get(
+                "metadata",
+                {}
+            )
+
+            source_uri = metadata.get(
+                "x-amz-bedrock-kb-source-uri",
+                ""
+            )
+
+            page = metadata.get(
+                "x-amz-bedrock-kb-document-page-number",
+                0
+            )
+
+            snippet = ""
+
+            if "content" in ref:
+
+                snippet = ref[
+                    "content"
+                ].get(
+                    "text",
                     ""
                 )
 
-                page = metadata.get(
-                    "x-amz-bedrock-kb-document-page-number",
-                    0
+            source = (
+                source_uri.split("/")[-1]
+                if source_uri
+                else "Unknown"
+            )
+
+            presigned_url = (
+                generate_presigned_url(
+                    source_uri
                 )
+            )
 
-                source = source_uri.split("/")[-1]
+            print(
+                "Generated URL:",
+                presigned_url
+            )
 
-                snippet = (
-                    ref.get(
-                        "content",
-                        {}
-                    ).get(
-                        "text",
-                        ""
-                    )[:300]
-                )
+            citations.append(
+                {
+                    "id":
+                    citation_id,
 
-                citations.append(
-                    {
-                        "id": citation_id,
-                        "source": source,
-                        "page": int(page),
-                        "snippet": snippet
-                    }
-                )
+                    "source":
+                    source,
 
-                citation_id += 1
+                    "page":
+                    int(page),
+
+                    "snippet":
+                    snippet,
+
+                    "url":
+                    presigned_url
+                }
+            )
+
+            citation_id += 1
 
     return citations
